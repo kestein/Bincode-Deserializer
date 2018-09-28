@@ -44,6 +44,16 @@ class DeserializerTest extends FunSuite {
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putLong(expected))
     assert(d.deserialize_i64() == expected)
   }
+  test("Deserializer.deserialize_f32") {
+    val expected = Float.MinValue
+    val d = makeDeserializer(8, (x:ByteBuffer) => x.putFloat(expected))
+    assert(d.deserialize_f32() == expected)
+  }
+  test("Deserializer.deserialize_f64") {
+    val expected = Double.MinValue
+    val d = makeDeserializer(8, (x:ByteBuffer) => x.putDouble(expected))
+    assert(d.deserialize_f64() == expected)
+  }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
     val byteRep = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN)

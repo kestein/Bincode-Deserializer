@@ -47,6 +47,16 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     rawBytes.getLong(0)
   }
 
+  def deserialize_f32(): Float = {
+    val rawBytes = grabN(4)
+    rawBytes.getFloat(0)
+  }
+
+  def deserialize_f64(): Double = {
+    val rawBytes = grabN(8)
+    rawBytes.getDouble(0)
+  }
+
   def grabN(amount: Int): ByteBuffer = {
     /* Use the next byte size up */
     val jvmSize = amount*2
