@@ -101,6 +101,18 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == expectedOne)
     assert(d.deserialize_option((x:Deserializer) => x.deserialize_i16()) == expectedTwo)
   }
+  test("Deserializer.deserialize_seq") {
+    val expected: Array[Int] = Array(1,2,3,4,5)
+    // Make the deserializer
+    var byteRep = ByteBuffer.allocate((5*4)+8).order(ByteOrder.LITTLE_ENDIAN)
+    byteRep = byteRep.putLong(5)
+    for(i <- 1 to 5) {
+      byteRep = byteRep.putInt(i)
+    }
+    val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
+    // Retrieve the values
+    assert(d.deserialize_seq((x:Deserializer) => x.deserialize_i32()).toArray sameElements expected)
+  }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
     val byteRep = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN)

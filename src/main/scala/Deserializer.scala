@@ -5,6 +5,8 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
   var bytesRead = 0
   val MaxIntAsBigInt = BigInt.apply(Int.MaxValue)
 
+  /* ========================================== Deserialization Functions ========================================== */
+
   def deserialize_bool(): Boolean = {
     if (readSizedNumber(1).get(0) == 0) false else true
   }
@@ -84,6 +86,19 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
       case _ => throw new IOException("Invalid option encoding")
     }
   }
+
+  def deserialize_seq[T](deserFun: Deserializer => T): Seq[T] = {
+    // Grab the length of the sequence
+    val length = deserialize_u64()
+    var out = Seq.newBuilder[T]
+    // Call the deserialization function length # of times
+    for (_ <- BigInt.apply(0) until length) {
+      out += deserFun(this)
+    }
+    out.result()
+  }
+
+  /* =========================================== Helper Functions =========================================== */
 
   /*
     Reads the specified number of bytes into a buffer for the purposes of number creation. Increments the bytesRead cursor.
