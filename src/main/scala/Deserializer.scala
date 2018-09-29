@@ -1,9 +1,6 @@
 import java.io.{IOException, InputStream}
 import java.nio.{ByteBuffer, ByteOrder}
 
-import scala.io.Codec.fromUTF8
-import scala.util.control.Exception._
-
 class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE_ENDIAN) {
   var bytesRead = 0
   val MaxIntAsBigInt = BigInt.apply(Int.MaxValue)
@@ -72,6 +69,20 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     val buf: Array[Byte] = allocateLargeArray(length)
     readLargeBytes(buf, length)
     new String(buf, "utf-8")
+  }
+
+  /*
+    Deserialize an option type.
+
+    @param deserFun: A function to apply on the source stream to retrieve the value
+    @return: An option over the given type T
+   */
+  def deserialize_option[T](deserFun: Deserializer => T): Option[T] = {
+    deserialize_u8() match {
+      case 0 => None
+      case 1 => Some(deserFun(this))
+      case _ => throw new IOException("Invalid option encoding")
+    }
   }
 
   /*

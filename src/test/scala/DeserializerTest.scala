@@ -79,6 +79,28 @@ class DeserializerTest extends FunSuite {
     val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
     assert(d.deserialize_str() == "test")
   }
+  test("Deserializer.deserialize_none") {
+    val expected = None
+    val d = makeDeserializer(1, (x:ByteBuffer) => x.put(0.toByte))
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u8()) == expected)
+  }
+  test("Deserializer.deserialize_some_int") {
+    val expected: Some[Int] = Some(7)
+    val d = makeDeserializer(5, (x:ByteBuffer) => x.put(1.toByte).putInt(7))
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == expected)
+  }
+  test("Deserializer.deserialize_some_int_some_short") {
+    val expectedOne: Some[Int] = Some(7)
+    val expectedTwo: Some[Short] = Some(-1)
+    // Make the deserializer
+    var byteRep = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN)
+    byteRep = byteRep.put(1.toByte).putInt(7) // 5
+    byteRep = byteRep.put(1.toByte).putShort(-1) // 3
+    val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
+    // Retrieve the values
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == expectedOne)
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_i16()) == expectedTwo)
+  }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
     val byteRep = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN)
