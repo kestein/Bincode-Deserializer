@@ -72,13 +72,13 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_f64() == expectedOne)
     assert(d.deserialize_u8() == expectedTwo)
   }
-  /*test("Deserializer.deserialize_str") {
+  test("Deserializer.deserialize_str") {
     var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN).putLong( 4)
     val expected = new String("test".getBytes(), "utf-8")
     expectedBytes = expectedBytes.put(expected.getBytes())
     val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
     assert(d.deserialize_str() == "test")
-  }*/
+  }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
     val byteRep = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN)

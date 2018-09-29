@@ -6,6 +6,7 @@ import scala.util.control.Exception._
 
 class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE_ENDIAN) {
   var bytesRead = 0
+  val MaxIntAsBigInt = BigInt.apply(Int.MaxValue)
 
   def deserialize_bool(): Boolean = {
     if (readSizedNumber(1).get(0) == 0) false else true
@@ -66,17 +67,11 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
   }
 
   def deserialize_str(): String = {
-    /*val length = readSizedNumber(8).getLong()
+    val length = deserialize_u64()
     bytesRead += 8
-    var buf: Array[Byte] = allocateLongArray(length)
-    readLongBytes(buf, length)
-    if (source.readNBytes(buf, bytesRead, length) != length) {
-      throw new IOException("Requested number of bytes is more than the number of bytes in the source")
-    } else {
-      bytesRead += length
-      new String(buf, "utf-8")
-    }*/
-    ""
+    val buf: Array[Byte] = allocateLargeArray(length)
+    readLargeBytes(buf, length)
+    new String(buf, "utf-8")
   }
 
   /*
@@ -100,6 +95,55 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     } else {
       bytesRead += amount
       ByteBuffer.allocate(jvmSize).order(endianness).put(buf)
+    }
+  }
+
+  /*
+    Create a byte array that can support 8 bit sizes
+
+    @param size: The size of the buffer to allocate
+    @return: An empty array with the specified size
+   */
+  private def allocateLargeArray(size: BigInt): Array[Byte] = {
+    val ints: Int = (size/MaxIntAsBigInt).toInt
+    if (ints == 0) {
+      // The entire array can be made by typecasting
+      Array.fill(size.toInt)(0)
+    } else {
+      // A larger array is needed. Append into one array the large length needed
+      var out: Array[Byte] = new Array(0)
+      for (_ <- 0 to ints) {
+        out = out ++ Array.fill(Int.MaxValue)(0.toByte)
+      }
+      out = out ++ Array.fill((size%MaxIntAsBigInt).toInt)(0.toByte)
+      out
+    }
+  }
+
+  /*
+    Reads the amount specified by length into the buf array. The buf must be preallocated for the requested number of
+     bytes.
+   */
+  private def readLargeBytes(buf: Array[Byte], length: BigInt) = {
+    assert(buf.length>=length)
+    val reads: Int = (length/MaxIntAsBigInt).toInt
+    val leftover: Int = (length%MaxIntAsBigInt).toInt
+    if (reads == 0) {
+      // The requested read can fit from one read
+      source.readNBytes(buf, 0, length.toInt)
+    } else {
+      // A series of reads is used to fill the buffer
+      for (i <- 0 to reads) {
+        if (source.readNBytes(buf, i*Int.MaxValue, Int.MaxValue) != Int.MaxValue) {
+          throw new IOException("Requested number of bytes is more than the number of bytes in the source")
+        }
+        bytesRead += Int.MaxValue
+      }
+      // Read in any leftover bytes
+      if (source.readNBytes(buf, reads*Int.MaxValue, leftover) != leftover) {
+        throw new IOException("Requested number of bytes is more than the number of bytes in the source")
+      }
+      bytesRead += leftover
     }
   }
 }
