@@ -98,6 +98,10 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     out.result()
   }
 
+  def deserialize_tuple[T](config: TupleDeserializeConfig[T]): T = {
+    config.deserialize(this)
+  }
+
   /* =========================================== Helper Functions =========================================== */
 
   /*

@@ -73,9 +73,11 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_u8() == expectedTwo)
   }
   test("Deserializer.deserialize_str") {
-    var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN).putLong( 4)
+    /*var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN).putLong( 4)
     val expected = new String("test".getBytes(), "utf-8")
-    expectedBytes = expectedBytes.put(expected.getBytes())
+    expectedBytes = expectedBytes.put(expected.getBytes())*/
+    var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
+    expectedBytes = putString(expectedBytes, "test")
     val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
     assert(d.deserialize_str() == "test")
   }
@@ -113,9 +115,30 @@ class DeserializerTest extends FunSuite {
     // Retrieve the values
     assert(d.deserialize_seq((x:Deserializer) => x.deserialize_i32()).toArray sameElements expected)
   }
+  test("Deserializer.deserialize_tuple") {
+    val expected = (9, "one", 8.toLong)
+    var byteRep = ByteBuffer.allocate((5*4)+8).order(ByteOrder.LITTLE_ENDIAN)
+    byteRep = byteRep.put(9.toByte)
+    byteRep = putString(byteRep, "one")
+    byteRep = byteRep.putLong(8)
+    val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
+
+    object SampleConfig extends TupleDeserializeConfig[(Byte, String, Long)] {
+      override def deserialize(d: Deserializer): (Byte, String, Long) = {
+        (d.deserialize_i8(), d.deserialize_str(), d.deserialize_i64())
+      }
+    }
+    assert(d.deserialize_tuple[(Byte, String, Long)](SampleConfig) == expected)
+  }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
     val byteRep = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN)
     new Deserializer(new ByteArrayInputStream(insertVal(byteRep).array()))
+  }
+
+  def putString(buffer: ByteBuffer, str: String): ByteBuffer = {
+    var newBuf = buffer.putLong(str.length)
+    newBuf = newBuf.put(str.getBytes("utf-8"))
+    newBuf
   }
 }
