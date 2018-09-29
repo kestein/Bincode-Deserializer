@@ -4,6 +4,14 @@ import java.nio.{ByteBuffer, ByteOrder}
 import org.scalatest.FunSuite
 
 class DeserializerTest extends FunSuite {
+  test("Deserializer.deserialize_bool") {
+    // False
+    var d = makeDeserializer(1, (x:ByteBuffer) => x.put(0.toByte))
+    assert(!d.deserialize_bool())
+    // True
+    d = makeDeserializer(1, (x:ByteBuffer) => x.put(1.toByte))
+    assert(d.deserialize_bool())
+  }
   test("Deserializer.deserialize_u8") {
     val expected = 97
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(expected.toByte))
@@ -54,6 +62,23 @@ class DeserializerTest extends FunSuite {
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putDouble(expected))
     assert(d.deserialize_f64() == expected)
   }
+  test("Deserializer.deserialize_multiple_numbers") {
+    val expectedOne = Double.MinValue
+    val expectedTwo: Byte = 100
+    val d = makeDeserializer(9, (x:ByteBuffer) => {
+      x.putDouble(expectedOne)
+      x.put(expectedTwo)
+    })
+    assert(d.deserialize_f64() == expectedOne)
+    assert(d.deserialize_u8() == expectedTwo)
+  }
+  /*test("Deserializer.deserialize_str") {
+    var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN).putLong( 4)
+    val expected = new String("test".getBytes(), "utf-8")
+    expectedBytes = expectedBytes.put(expected.getBytes())
+    val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
+    assert(d.deserialize_str() == "test")
+  }*/
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
     val byteRep = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN)
