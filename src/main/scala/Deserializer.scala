@@ -98,10 +98,27 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     out.result()
   }
 
-  def deserialize_tuple[T](config: TupleDeserializeConfig[T]): T = {
+  def deserialize_tuple[T](config: FlatDeserializeConfig[T]): T = {
     config.deserialize(this)
   }
 
+  def deserialize_struct[T](config: FlatDeserializeConfig[T]): T = {
+    deserialize_tuple(config)
+  }
+
+  def deserialize_object[T](config: FlatDeserializeConfig[T]): T = {
+    deserialize_tuple(config)
+  }
+
+  def deserialize_map[K, V](config: MapDeserializeConfig[K, V]): Map[K, V] = {
+    val values = deserialize_u64()
+    var out: Map[K, V] = Map()
+    for (_ <- BigInt(0) until values) {
+      //out(config.deserialize_key(this)) = config.deserialize_value(this)
+      out = out + (config.deserialize_key(this) -> config.deserialize_value(this))
+    }
+    out
+  }
   /* =========================================== Helper Functions =========================================== */
 
   /*

@@ -123,12 +123,30 @@ class DeserializerTest extends FunSuite {
     byteRep = byteRep.putLong(8)
     val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
 
-    object SampleConfig extends TupleDeserializeConfig[(Byte, String, Long)] {
+    object ByteStringLongConfig extends FlatDeserializeConfig[(Byte, String, Long)] {
       override def deserialize(d: Deserializer): (Byte, String, Long) = {
         (d.deserialize_i8(), d.deserialize_str(), d.deserialize_i64())
       }
     }
-    assert(d.deserialize_tuple[(Byte, String, Long)](SampleConfig) == expected)
+    assert(d.deserialize_tuple[(Byte, String, Long)](ByteStringLongConfig) == expected)
+  }
+  test("Deserializer.deserialize_map") {
+    val expected: Map[Int, Int] = Map(1->2,3->4,5->6)
+    var byteRep = ByteBuffer.allocate(8+6*4).order(ByteOrder.LITTLE_ENDIAN)
+    byteRep = byteRep.putLong(3)
+    for (i <- 1 to 6) {
+      byteRep = byteRep.putInt(i)
+    }
+    object MapIntIntConfig extends MapDeserializeConfig[Int, Int] {
+      def deserialize_key(d: Deserializer): Int = {
+        d.deserialize_i32()
+      }
+      def deserialize_value(d: Deserializer): Int = {
+        d.deserialize_i32()
+      }
+    }
+    val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
+    assert(d.deserialize_map(MapIntIntConfig) == expected)
   }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
