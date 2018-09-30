@@ -1,4 +1,4 @@
-import java.io.{ByteArrayInputStream, InputStream}
+import java.io.ByteArrayInputStream
 import java.nio.{ByteBuffer, ByteOrder}
 
 import org.scalatest.FunSuite
@@ -147,6 +147,29 @@ class DeserializerTest extends FunSuite {
     }
     val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
     assert(d.deserialize_map(MapIntIntConfig) == expected)
+  }
+  test("Deserializer.deserialize_enum") {
+    object TesterEnum extends Enumeration {
+      type TesterEnum = Int
+      val pass = 100
+      val fail = 99
+    }
+    val d = makeDeserializer(12, (x:ByteBuffer) => {
+      var y = x.putInt(0)
+      y = y.putInt(1)
+      y
+    })
+    object TesterEnumDeserializeConfig extends EnumDeserializeConfig[TesterEnum.TesterEnum] {
+      override def deserialize(variant: Long, d: Deserializer): TesterEnum.TesterEnum = {
+        variant match {
+          case 0 => TesterEnum.pass
+          case 1 => TesterEnum.fail
+          case _ => throw new IllegalAccessError("Invalid enum variant")
+        }
+      }
+    }
+    assert(d.deserialize_enum(TesterEnumDeserializeConfig) == TesterEnum.pass)
+    assert(d.deserialize_enum(TesterEnumDeserializeConfig) == TesterEnum.fail)
   }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {

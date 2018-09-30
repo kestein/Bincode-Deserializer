@@ -119,6 +119,11 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     }
     out
   }
+
+  def deserialize_enum[T](config: EnumDeserializeConfig[T]): T = {
+    val variant = deserialize_u32()
+    config.deserialize(variant, this)
+  }
   /* =========================================== Helper Functions =========================================== */
 
   /*
