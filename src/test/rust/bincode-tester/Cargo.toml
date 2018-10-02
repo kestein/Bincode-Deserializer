@@ -1,0 +1,9 @@
+[package]
+name = "bincode-tester"
+version = "0.1.0"
+authors = ["kestein <kestein42932@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+bincode="1.*"
+clap="2.*"
