@@ -4,11 +4,17 @@ extern crate serde_derive;
 
 use std::collections::HashMap;
 use std::io::Write;
+use std::iter::FromIterator;
 
 use rand::{
     Rng, SeedableRng,
+    distributions::Standard,
     rngs::StdRng,
 };
+
+const MIN: usize = 0;
+const MAX_COLLECTION_LEN: usize = 20;
+const MAX_STR_LEN: usize = 200;
 
 pub struct Harness<W: Write> {
     data: RandomStuffGenerator,
@@ -39,31 +45,77 @@ impl RandomStuffGenerator {
         }
     }
 
+    #[allow(non_snake_case)]
     pub fn gen_RandomStuff(&mut self) -> RandomStuff {
+        let mut one = HashMap::new();
+        for _ in  0..self.generator.gen_range(MIN, MAX_COLLECTION_LEN) {
+            one.insert(self.generator.gen(), self.gen_RandomSubStuff());
+        }
+        let mut two = Vec::new();
+        for _ in 0..self.generator.gen_range(MIN, MAX_STR_LEN) {
+            two.push(self.gen_string());
+        }
+        let mut seven = None;
+        if self.generator.gen::<usize>()%2 == 0 {
+            seven = Some(self.generator.gen::<i64>());
+        }
+        let mut eight = (0, 0, 0, 0);
+        eight.0 = self.generator.gen();
+        eight.1 = self.generator.gen();
+        eight.2 = self.generator.gen();
+        eight.3 = self.generator.gen();
         RandomStuff {
-            one: HashMap::new(),
-            two: Vec::new(),
-            three: 0,
-            four: false,
-            five: 0.0,
-            six: 0,
-            seven: None,
-            eight: (0, 0, 0, 0)
+            one: one,
+            two: two,
+            three: self.generator.gen(),
+            four: self.generator.gen::<usize>()%2 == 0,
+            five: self.generator.gen::<f64>(),
+            six: self.generator.gen::<u32>(),
+            seven: seven,
+            eight: eight
         }
     }
 
+    #[allow(non_snake_case)]
     pub fn gen_RandomSubStuff(&mut self) -> RandomSubStuff {
+        let mut four = Vec::new();
+        for _ in 0..self.generator.gen_range(MIN, MAX_COLLECTION_LEN) {
+            let sub_length: usize = self.generator.gen_range(MIN, MAX_COLLECTION_LEN);
+            four.push(self.generator.sample_iter(&Standard)
+                                    .take(sub_length)
+                                    .collect()
+            );
+        }
         RandomSubStuff {
-            one: 0,
-            two: String::new(),
-            three: 64,
-            four: Vec::new(),
-            five: MoreSubStuff::Less
+            one: self.generator.gen(),
+            two: self.gen_string(),
+            three: self.generator.gen(),
+            four: four,
+            five: self.gen_MoreSubStuff()
         }
     }
 
+    #[allow(non_snake_case)]
     pub fn gen_MoreSubStuff(&mut self) -> MoreSubStuff {
-        MoreSubStuff::Less
+        match self.generator.gen::<usize>()%4 {
+            0 => MoreSubStuff::Less,
+            1 => MoreSubStuff::More,
+            2 => MoreSubStuff::Maybe,
+            3 => {
+                if self.generator.gen::<usize>()%2 == 0 {
+                    MoreSubStuff::No(Some(self.generator.gen()))
+                } else {
+                    MoreSubStuff::No(None)
+                }
+            },
+            _ => unreachable!()
+        }
+    }
+
+    fn gen_string(&mut self) -> String {
+        let strlen = self.generator.gen_range(MIN,MAX_STR_LEN);
+        let chars: Vec<char> = self.generator.sample_iter(&Standard).take(strlen).collect();
+        String::from_iter(chars)
     }
 }
 

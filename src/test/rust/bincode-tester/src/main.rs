@@ -52,7 +52,7 @@ fn main() {
         "-" | "stdout" => Box::new(stdout()),
         s @ _ => Box::new(BufWriter::new(File::create(s).expect("Unable to create file")))
     };
-    let mut harness = Harness::new(sink, "");
+    let mut harness = Harness::new(sink, app_cli.value_of("SEED").unwrap());
     match app_cli.subcommand() {
         ("write", Some(sub_args)) => {
             let amount = sub_args.value_of("Amount")
