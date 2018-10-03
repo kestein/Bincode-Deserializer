@@ -19,7 +19,10 @@ class RandomStuff(
  five: Double,
  six: Long,
  seven: Option[Long],
- eight: (Short, Short, Long, Long)) extends FlatDeserializeConfig[RandomStuff] {
+ eight: (Short, Short, Long, Long)
+)
+
+class RandomStuffFactory extends FlatDeserializeConfig[RandomStuff] {
 
   object OneMapConfig extends MapDeserializeConfig[BigInt, RandomSubStuff] {
     override def deserialize_key(d: Deserializer): BigInt = {
@@ -36,6 +39,7 @@ class RandomStuff(
       (d.deserialize_u8(), d.deserialize_i16(), d.deserialize_u32(), d.deserialize_i64())
     }
   }
+
   override def deserialize(d: Deserializer): RandomStuff = {
     val one = d.deserialize_map[BigInt, RandomSubStuff](OneMapConfig)
     val two = d.deserialize_seq[String]((x: Deserializer) => x.deserialize_str())
