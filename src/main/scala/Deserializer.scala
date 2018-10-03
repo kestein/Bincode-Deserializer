@@ -14,6 +14,15 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
   /*
     Since there are no unsigned types the next size up is used for the corresponding bit size to ensure enough space
     for all possible values
+
+    u8 -> Short
+    i8 -> Byte
+    u16 -> Int
+    i16 -> Short
+    u32 -> Long
+    i32 -> Int
+    u64 -> BigIng
+    i64 -> Long
   */
   def deserialize_u8(): Short = {
     val rawBytes = readSizedNumber(1)
