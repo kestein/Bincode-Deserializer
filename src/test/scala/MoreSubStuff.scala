@@ -18,11 +18,14 @@ class No(value: Option[BigInt]) extends MoreSubStuff
 class MoreSubStuffFactory extends EnumDeserializeConfig[MoreSubStuff] {
   override def deserialize(variant: Long, d: Deserializer): MoreSubStuff = {
     variant match {
-      case 1 => new Less
-      case 2 => new More
-      case 3 => new Maybe
-      case 1 => new No(d.deserialize_option[BigInt]((x: Deserializer) => x.deserialize_u64()))
-      case _ => throw new IllegalArgumentException("Variant was not found")
+      case 0 => new Less
+      case 1 => new More
+      case 2 => new Maybe
+      case 3 => new No(d.deserialize_option[BigInt]((x: Deserializer) => x.deserialize_u64()))
+      case i@_ =>
+        var err = new StringBuilder("The Variant was not found ")
+        err = err.append(i.toString)
+        throw new IllegalArgumentException(err.toString())
     }
   }
 }
