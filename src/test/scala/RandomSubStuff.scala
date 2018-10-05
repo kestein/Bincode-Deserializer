@@ -8,7 +8,13 @@ pub struct RandomSubStuff {
 }
  */
 
-class RandomSubStuff(one: BigInt, two: String, three: Long, four: Seq[Seq[Int]], five: MoreSubStuff)
+class RandomSubStuff(
+  val one: BigInt,
+  val two: String,
+  val three: Long,
+  val four: Seq[Seq[Int]],
+  val five: MoreSubStuff
+)
 
 class RandomSubStuffFactory extends FlatDeserializeConfig[RandomSubStuff] {
   override def deserialize(d: Deserializer): RandomSubStuff = {

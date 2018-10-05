@@ -12,7 +12,7 @@ trait MoreSubStuff
 class Less extends MoreSubStuff
 class More extends MoreSubStuff
 class Maybe extends MoreSubStuff
-class No(value: Option[BigInt]) extends MoreSubStuff
+class No(val value: Option[BigInt]) extends MoreSubStuff
 
 // Way to get the data
 class MoreSubStuffFactory extends EnumDeserializeConfig[MoreSubStuff] {

@@ -10,16 +10,15 @@ pub struct RandomStuff {
   eight: (u8, i16, u32, i64),
 }
 */
-
 class RandomStuff(
- one: Map[BigInt, RandomSubStuff],
- two: Seq[String],
- three: Byte,
- four: Boolean,
- five: Double,
- six: Long,
- seven: Option[Long],
- eight: (Short, Short, Long, Long)
+ val one: Map[BigInt, RandomSubStuff],
+ val two: Seq[String],
+ val three: Byte,
+ val four: Boolean,
+ val five: Double,
+ val six: Long,
+ val seven: Option[Long],
+ val eight: (Short, Short, Long, Long)
 )
 
 class RandomStuffFactory extends FlatDeserializeConfig[RandomStuff] {
