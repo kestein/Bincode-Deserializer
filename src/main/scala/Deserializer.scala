@@ -3,13 +3,19 @@ import java.math.BigInteger
 import java.nio.{ByteBuffer, ByteOrder}
 
 class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE_ENDIAN) {
+  type DeserializeResult[T] = Either[DeserializerError, T]
+
   var bytesRead = 0
   val MaxIntAsBigInt = BigInt.apply(Int.MaxValue)
 
   /* ========================================== Deserialization Functions ========================================== */
 
-  def deserialize_bool(): Boolean = {
-    if (readSizedNumber(1).get(0) == 0) false else true
+  def deserialize_bool(): DeserializeResult[Boolean] = {
+    readSizedNumber(1).get(0) match {
+      case 0 => Right(false)
+      case 1 => Right(true)
+      case i@_ => Left(new InvalidVariantError(i, Seq("0", "1")))
+    }
   }
 
   /*

@@ -7,10 +7,18 @@ class DeserializerTest extends FunSuite {
   test("Deserializer.deserialize_bool") {
     // False
     var d = makeDeserializer(1, (x:ByteBuffer) => x.put(0.toByte))
-    assert(!d.deserialize_bool())
+    var bool = d.deserialize_bool()
+    assert(bool.isRight)
+    assert(!bool.getOrElse(true))
     // True
     d = makeDeserializer(1, (x:ByteBuffer) => x.put(1.toByte))
-    assert(d.deserialize_bool())
+    bool = d.deserialize_bool()
+    assert(bool.isRight)
+    assert(bool.getOrElse(false))
+    // Invalid
+    d = makeDeserializer(1, (x:ByteBuffer) => x.put(9.toByte))
+    bool = d.deserialize_bool()
+    assert(bool.isLeft)
   }
   test("Deserializer.deserialize_u8") {
     val expected = 97

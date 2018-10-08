@@ -43,7 +43,10 @@ class RandomStuffFactory extends FlatDeserializeConfig[RandomStuff] {
     val one = d.deserialize_map[BigInt, RandomSubStuff](OneMapConfig)
     val two = d.deserialize_seq[String]((x: Deserializer) => x.deserialize_str())
     val three = d.deserialize_i8()
-    val four = d.deserialize_bool()
+    val four = d.deserialize_bool() match {
+      case Right(x) => x
+      case Left(err) => throw new DeserializerException(err)
+    }
     val five = d.deserialize_f64()
     val six = d.deserialize_u32()
     val seven = d.deserialize_option[Long]((x: Deserializer) => x.deserialize_i64())
