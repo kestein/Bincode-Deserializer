@@ -1,4 +1,5 @@
 import java.io.{IOException, InputStream}
+import java.math.BigInteger
 import java.nio.{ByteBuffer, ByteOrder}
 
 class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE_ENDIAN) {
@@ -56,7 +57,7 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
 
   def deserialize_u64(): BigInt = {
     val rawBytes = readSizedNumber(8)
-    BigInt.apply(rawBytes.getLong(0))
+    new BigInteger(rawBytes.array().reverse)
   }
 
   def deserialize_i64(): Long = {
