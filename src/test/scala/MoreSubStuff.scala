@@ -1,7 +1,7 @@
+import Deserializer.DeserializeResult
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 /*
 pub enum MoreSubStuff {
@@ -22,12 +22,15 @@ class No(val no: Option[BigInt]) extends MoreSubStuff
 
 // Way to get the data
 class MoreSubStuffFactory extends EnumDeserializeConfig[MoreSubStuff] {
-  override def deserialize(variant: Long, d: Deserializer): MoreSubStuff = {
+  override def deserialize(variant: Long, d: Deserializer): DeserializeResult[MoreSubStuff] = {
     variant match {
-      case 0 => new Less
-      case 1 => new More
-      case 2 => new Maybe
-      case 3 => new No(d.deserialize_option[BigInt]((x: Deserializer) => x.deserialize_u64()))
+      case 0 => Right(new Less)
+      case 1 => Right(new More)
+      case 2 => Right(new Maybe)
+      case 3 =>
+        d.deserialize_option[BigInt](x => x.deserialize_u64()).fold(err => Left(err), maybe_num => {
+          Right(new No(maybe_num))
+        })
       case i@_ =>
         var err = new StringBuilder("The Variant was not found ")
         err = err.append(i.toString)

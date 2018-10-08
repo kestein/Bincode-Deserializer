@@ -1,3 +1,5 @@
+import Deserializer.DeserializeResult
+
 /*
 pub struct RandomSubStuff {
     one: usize,
@@ -17,16 +19,21 @@ class RandomSubStuff(
 )
 
 class RandomSubStuffFactory extends FlatDeserializeConfig[RandomSubStuff] {
-  override def deserialize(d: Deserializer): RandomSubStuff = {
-    val one = d.deserialize_u64()
-    val two = d.deserialize_str()
-    val three = d.deserialize_i64()
-    val four = d.deserialize_seq[Seq[Int]](
-      (x: Deserializer) => x.deserialize_seq[Int](
-        (xx: Deserializer) => xx.deserialize_u16()
-      )
-    )
-    val five = d.deserialize_enum(new MoreSubStuffFactory)
-    new RandomSubStuff(one, two, three, four, five)
+  override def deserialize(d: Deserializer): DeserializeResult[RandomSubStuff] = {
+    d.deserialize_u64().fold(err => Left(err), one => {
+      d.deserialize_str().fold(err => Left(err), two => {
+        d.deserialize_i64().fold(err => Left(err), three => {
+          d.deserialize_seq[Seq[Int]](
+            (x: Deserializer) => x.deserialize_seq[Int](
+              (xx: Deserializer) => xx.deserialize_u16()
+            )
+          ).fold(err => Left(err), four => {
+            d.deserialize_enum(new MoreSubStuffFactory).fold(err => Left(err), five => {
+              Right(new RandomSubStuff(one, two, three, four, five))
+            })
+          })
+        })
+      })
+    })
   }
 }

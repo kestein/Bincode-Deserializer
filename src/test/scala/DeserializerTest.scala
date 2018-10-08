@@ -1,6 +1,7 @@
 import java.io.ByteArrayInputStream
 import java.nio.{ByteBuffer, ByteOrder}
 
+import Deserializer.DeserializeResult
 import org.scalatest.FunSuite
 
 class DeserializerTest extends FunSuite {
@@ -23,52 +24,52 @@ class DeserializerTest extends FunSuite {
   test("Deserializer.deserialize_u8") {
     val expected = 97
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(expected.toByte))
-    assert(d.deserialize_u8() == expected.toShort)
+    assert(d.deserialize_u8() == Right(expected.toShort))
   }
   test("Deserializer.deserialize_i8") {
     val expected = -97
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(expected.toByte))
-    assert(d.deserialize_i8() == expected.toByte)
+    assert(d.deserialize_i8() == Right(expected.toByte))
   }
   test("Deserializer.deserialize_u16") {
     val expected = 300
     val d = makeDeserializer(2, (x:ByteBuffer) => x.putShort(expected.toShort))
-    assert(d.deserialize_u16() == expected.toInt)
+    assert(d.deserialize_u16() == Right(expected.toInt))
   }
   test("Deserializer.deserialize_i16") {
     val expected = -300
     val d = makeDeserializer(2, (x:ByteBuffer) => x.putShort(expected.toShort))
-    assert(d.deserialize_i16() == expected.toShort)
+    assert(d.deserialize_i16() == Right(expected.toShort))
   }
   test("Deserializer.deserialize_u32") {
     val expected = 300000
     val d = makeDeserializer(4, (x:ByteBuffer) => x.putInt(expected))
-    assert(d.deserialize_u32() == expected.toLong)
+    assert(d.deserialize_u32() == Right(expected.toLong))
   }
   test("Deserializer.deserialize_i32") {
     val expected = -300000
     val d = makeDeserializer(4, (x:ByteBuffer) => x.putInt(expected))
-    assert(d.deserialize_i32() == expected)
+    assert(d.deserialize_i32() == Right(expected))
   }
   test("Deserializer.deserialize_u64") {
     val expected: Long = Long.MaxValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putLong(expected))
-    assert(d.deserialize_u64().toLong == expected)
+    assert(d.deserialize_u64() == Right(expected))
   }
   test("Deserializer.deserialize_i64") {
     val expected = Long.MinValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putLong(expected))
-    assert(d.deserialize_i64() == expected)
+    assert(d.deserialize_i64() == Right(expected))
   }
   test("Deserializer.deserialize_f32") {
     val expected = Float.MinValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putFloat(expected))
-    assert(d.deserialize_f32() == expected)
+    assert(d.deserialize_f32() == Right(expected))
   }
   test("Deserializer.deserialize_f64") {
     val expected = Double.MinValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putDouble(expected))
-    assert(d.deserialize_f64() == expected)
+    assert(d.deserialize_f64() == Right(expected))
   }
   test("Deserializer.deserialize_multiple_numbers") {
     val expectedOne = Double.MinValue
@@ -77,8 +78,8 @@ class DeserializerTest extends FunSuite {
       x.putDouble(expectedOne)
       x.put(expectedTwo)
     })
-    assert(d.deserialize_f64() == expectedOne)
-    assert(d.deserialize_u8() == expectedTwo)
+    assert(d.deserialize_f64() == Right(expectedOne))
+    assert(d.deserialize_u8() == Right(expectedTwo))
   }
   test("Deserializer.deserialize_str") {
     /*var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN).putLong( 4)
@@ -87,17 +88,17 @@ class DeserializerTest extends FunSuite {
     var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
     expectedBytes = putString(expectedBytes, "test")
     val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
-    assert(d.deserialize_str() == "test")
+    assert(d.deserialize_str() == Right("test"))
   }
   test("Deserializer.deserialize_none") {
     val expected = None
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(0.toByte))
-    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u8()) == expected)
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u8()) == Right(expected))
   }
   test("Deserializer.deserialize_some_int") {
     val expected: Some[Int] = Some(7)
     val d = makeDeserializer(5, (x:ByteBuffer) => x.put(1.toByte).putInt(7))
-    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == expected)
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == Right(expected))
   }
   test("Deserializer.deserialize_some_int_some_short") {
     val expectedOne: Some[Int] = Some(7)
@@ -108,8 +109,8 @@ class DeserializerTest extends FunSuite {
     byteRep = byteRep.put(1.toByte).putShort(-1) // 3
     val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
     // Retrieve the values
-    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == expectedOne)
-    assert(d.deserialize_option((x:Deserializer) => x.deserialize_i16()) == expectedTwo)
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == Right(expectedOne))
+    assert(d.deserialize_option((x:Deserializer) => x.deserialize_i16()) == Right(expectedTwo))
   }
   test("Deserializer.deserialize_seq") {
     val expected: Array[Int] = Array(1,2,3,4,5)
@@ -121,7 +122,9 @@ class DeserializerTest extends FunSuite {
     }
     val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
     // Retrieve the values
-    assert(d.deserialize_seq((x:Deserializer) => x.deserialize_i32()).toArray sameElements expected)
+    d.deserialize_seq((x:Deserializer) => x.deserialize_i32()).fold(err => throw new DeserializerException(err), s => {
+      assert(s.toArray sameElements expected)
+    })
   }
   test("Deserializer.deserialize_tuple") {
     val expected = (9, "one", 8.toLong)
@@ -132,11 +135,17 @@ class DeserializerTest extends FunSuite {
     val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
 
     object ByteStringLongConfig extends FlatDeserializeConfig[(Byte, String, Long)] {
-      override def deserialize(d: Deserializer): (Byte, String, Long) = {
-        (d.deserialize_i8(), d.deserialize_str(), d.deserialize_i64())
+      override def deserialize(d: Deserializer): DeserializeResult[(Byte, String, Long)] = {
+        d.deserialize_i8().fold(err => Left(err), one => {
+          d.deserialize_str().fold(err => Left(err), two => {
+            d.deserialize_i64().map(three => {
+              return Right(one, two, three)
+            })
+          })
+        })
       }
     }
-    assert(d.deserialize_tuple[(Byte, String, Long)](ByteStringLongConfig) == expected)
+    assert(d.deserialize_tuple[(Byte, String, Long)](ByteStringLongConfig) == Right(expected))
   }
   test("Deserializer.deserialize_map") {
     val expected: Map[Int, Int] = Map(1->2,3->4,5->6)
@@ -146,15 +155,15 @@ class DeserializerTest extends FunSuite {
       byteRep = byteRep.putInt(i)
     }
     object MapIntIntConfig extends MapDeserializeConfig[Int, Int] {
-      def deserialize_key(d: Deserializer): Int = {
+      def deserialize_key(d: Deserializer): DeserializeResult[Int] = {
         d.deserialize_i32()
       }
-      def deserialize_value(d: Deserializer): Int = {
+      def deserialize_value(d: Deserializer): DeserializeResult[Int] = {
         d.deserialize_i32()
       }
     }
     val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
-    assert(d.deserialize_map(MapIntIntConfig) == expected)
+    assert(d.deserialize_map(MapIntIntConfig) == Right(expected))
   }
   test("Deserializer.deserialize_enum") {
     object TesterEnum extends Enumeration {
@@ -168,16 +177,16 @@ class DeserializerTest extends FunSuite {
       y
     })
     object TesterEnumDeserializeConfig extends EnumDeserializeConfig[TesterEnum.TesterEnum] {
-      override def deserialize(variant: Long, d: Deserializer): TesterEnum.TesterEnum = {
+      override def deserialize(variant: Long, d: Deserializer): DeserializeResult[TesterEnum.TesterEnum] = {
         variant match {
-          case 0 => TesterEnum.pass
-          case 1 => TesterEnum.fail
-          case _ => throw new IllegalAccessError("Invalid enum variant")
+          case 0 => Right(TesterEnum.pass)
+          case 1 => Right(TesterEnum.fail)
+          case v@_ => Left(new InvalidVariantError(v.toInt, Seq("0", "1")))
         }
       }
     }
-    assert(d.deserialize_enum(TesterEnumDeserializeConfig) == TesterEnum.pass)
-    assert(d.deserialize_enum(TesterEnumDeserializeConfig) == TesterEnum.fail)
+    assert(d.deserialize_enum(TesterEnumDeserializeConfig) == Right(TesterEnum.pass))
+    assert(d.deserialize_enum(TesterEnumDeserializeConfig) == Right(TesterEnum.fail))
   }
 
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {

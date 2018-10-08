@@ -12,6 +12,12 @@ class DeserializerException(message: String, reason: Exception) extends Exceptio
 
 class InvalidVariantError(message: String) extends DeserializerError(message) {
   def this(variant: Int, expected: Seq[String]) = {
-    this(new StringBuilder(variant).append(" is not a valid variant. Expected ").append(expected.mkString(",")).result())
+    this(s"$variant is not a valid variant. Expected ".concat(expected.mkString(",")))
+  }
+}
+
+class DeserializeIOError(message: String) extends DeserializerError(message) {
+  def this(requested: Int, got: Int) = {
+    this(s"Unable to read the request number of bytes. Requested $requested git $got")
   }
 }

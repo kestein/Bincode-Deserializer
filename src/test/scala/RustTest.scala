@@ -16,7 +16,7 @@ class RustTest extends FunSuite {
     val rustBasename: String = setupRustFiles(tempDirectory, "validateOne", 1)
     // Deserialize from rust to scala
     val d = new Deserializer(new FileInputStream(new StringBuilder(rustBasename).append(".bin").result()))
-    val deserializedValue: RandomStuff = d.deserialize_struct[RandomStuff](new RandomStuffFactory)
+    val deserializedValue: RandomStuff = d.deserialize_struct[RandomStuff](new RandomStuffFactory).fold(err => throw new DeserializerException(err), rs => rs)
     // Write out what scala deserialized
     val scalaFilename = setupDeserializedFile(tempDirectory, "validateOne", deserializedValue)
     // Validate
@@ -37,7 +37,7 @@ class RustTest extends FunSuite {
     val invalidRustFilename: String = setupRustFiles(tempDirectory, "differentSeeds-invalid", 1, "Saratoga").concat(".json")
     // Deserialize from rust to scala using rustBasename
     val d = new Deserializer(new FileInputStream(new StringBuilder(rustBasename).append(".bin").result()))
-    val deserializedValue: RandomStuff = d.deserialize_struct[RandomStuff](new RandomStuffFactory)
+    val deserializedValue: RandomStuff = d.deserialize_struct[RandomStuff](new RandomStuffFactory).fold(err => throw new DeserializerException(err), rs => rs)
     // Write out what scala deserialized
     val scalaFilename: String = setupDeserializedFile(tempDirectory, "differentSeeds", deserializedValue)
     // Validate
@@ -50,6 +50,7 @@ class RustTest extends FunSuite {
     assert(validationOutput.length > 0)
     println(validationOutput)
   }
+  // Multiple values
 
   /*
     Creates the necessary files to deserialize data into scala and validate scala to rust

@@ -1,3 +1,5 @@
+import Deserializer.DeserializeResult
+
 /*
 pub struct RandomStuff {
   one: HashMap<usize, RandomSubStuff>,
@@ -24,33 +26,46 @@ class RandomStuff(
 class RandomStuffFactory extends FlatDeserializeConfig[RandomStuff] {
 
   object OneMapConfig extends MapDeserializeConfig[BigInt, RandomSubStuff] {
-    override def deserialize_key(d: Deserializer): BigInt = {
+    override def deserialize_key(d: Deserializer): DeserializeResult[BigInt] = {
       d.deserialize_u64()
     }
 
-    override def deserialize_value(d: Deserializer): RandomSubStuff = {
+    override def deserialize_value(d: Deserializer): DeserializeResult[RandomSubStuff] = {
       d.deserialize_struct[RandomSubStuff](new RandomSubStuffFactory)
     }
   }
 
   object EightTupleConfig extends FlatDeserializeConfig[(Short, Short, Long, Long)] {
-    override def deserialize(d: Deserializer): (Short, Short, Long, Long) = {
-      (d.deserialize_u8(), d.deserialize_i16(), d.deserialize_u32(), d.deserialize_i64())
+    override def deserialize(d: Deserializer): DeserializeResult[(Short, Short, Long, Long)] = {
+      d.deserialize_u8().fold(err => Left(err), one => {
+        d.deserialize_i16().fold(err => Left(err), two => {
+          d.deserialize_u32().fold(err => Left(err), three => {
+            d.deserialize_i64().fold(err => Left(err), four => {
+              Right((one, two, three, four))
+            })
+          })
+        })
+      })
     }
   }
 
-  override def deserialize(d: Deserializer): RandomStuff = {
-    val one = d.deserialize_map[BigInt, RandomSubStuff](OneMapConfig)
-    val two = d.deserialize_seq[String]((x: Deserializer) => x.deserialize_str())
-    val three = d.deserialize_i8()
-    val four = d.deserialize_bool() match {
-      case Right(x) => x
-      case Left(err) => throw new DeserializerException(err)
-    }
-    val five = d.deserialize_f64()
-    val six = d.deserialize_u32()
-    val seven = d.deserialize_option[Long]((x: Deserializer) => x.deserialize_i64())
-    val eight = d.deserialize_tuple[(Short, Short, Long, Long)](EightTupleConfig)
-    new RandomStuff(one, two, three, four, five, six, seven, eight)
+  override def deserialize(d: Deserializer): DeserializeResult[RandomStuff] = {
+    d.deserialize_map[BigInt, RandomSubStuff](OneMapConfig).fold(err => Left(err), one => {
+      d.deserialize_seq[String]((x: Deserializer) => x.deserialize_str()).fold(err => Left(err), two => {
+        d.deserialize_i8().fold(err => Left(err), three => {
+          d.deserialize_bool().fold(err => Left(err), four => {
+            d.deserialize_f64().fold(err => Left(err), five => {
+              d.deserialize_u32().fold(err => Left(err), six => {
+                d.deserialize_option[Long]((x: Deserializer) => x.deserialize_i64()).fold(err => Left(err), seven => {
+                  d.deserialize_tuple[(Short, Short, Long, Long)](EightTupleConfig).fold(err => Left(err), eight => {
+                    Right(new RandomStuff(one, two, three, four, five, six, seven, eight))
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+    })
   }
 }
