@@ -21,3 +21,5 @@ class DeserializeIOError(message: String) extends DeserializerError(message) {
     this(s"Unable to read the request number of bytes. Requested $requested git $got")
   }
 }
+
+class EOFError() extends DeserializerError("EOF was reached in the stream")

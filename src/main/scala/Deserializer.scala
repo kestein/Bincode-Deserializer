@@ -159,7 +159,7 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     /* Read the actual requested amount from the underlying buffer */
     val actualRead = source.readNBytes(buf, 0, amount)
     if (actualRead != amount) {
-      Left(new DeserializeIOError(amount, actualRead))
+      Left(checkReadError(amount, actualRead))
     } else {
       bytesRead += amount
       Right(ByteBuffer.allocate(jvmSize).order(endianness).put(buf))
@@ -201,7 +201,7 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
       // The requested read can fit from one read
       actual = source.readNBytes(buf, 0, length.toInt)
       if (actual != length) {
-        Some(new DeserializeIOError(actual, length.toInt))
+        Some(checkReadError(length.toInt, actual))
       } else {
         None
       }
@@ -210,17 +210,33 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
       for (i <- 0 to reads) {
         actual = source.readNBytes(buf, i*Int.MaxValue, Int.MaxValue)
         if (actual != Int.MaxValue) {
-          return Some(new DeserializeIOError(actual, Int.MaxValue))
+          Some(checkReadError(Int.MaxValue, actual))
         }
         bytesRead += Int.MaxValue
       }
       // Read in any leftover bytes
       actual = source.readNBytes(buf, reads*Int.MaxValue, leftover)
       if (actual != leftover) {
-        return Some(new DeserializeIOError(actual, leftover))
+        Some(checkReadError(leftover, actual))
       }
       bytesRead += leftover
       None
+    }
+  }
+
+  /*
+    Determines what kind of IO error should be thrown
+
+    @param requested: The number of bytes that was requested
+    @param got: The number of bytes that were actually received
+    @return: A DeserializerError encapsulating what IO error happened
+   */
+  private def checkReadError(requested: Int, got: Int): DeserializerError = {
+    if (source.available() == 0) {
+      source.close()
+      new EOFError
+    } else {
+      new DeserializeIOError(requested, got)
     }
   }
 }
