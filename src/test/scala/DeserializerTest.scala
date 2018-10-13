@@ -5,6 +5,7 @@ import Deserializer.DeserializeResult
 import org.scalatest.FunSuite
 
 class DeserializerTest extends FunSuite {
+  /* Validate valid input yields a valid result */
   test("Deserializer.deserialize_bool") {
     // False
     var d = makeDeserializer(1, (x:ByteBuffer) => x.put(0.toByte))
@@ -16,10 +17,6 @@ class DeserializerTest extends FunSuite {
     bool = d.deserialize_bool()
     assert(bool.isRight)
     assert(bool.getOrElse(false))
-    // Invalid
-    d = makeDeserializer(1, (x:ByteBuffer) => x.put(9.toByte))
-    bool = d.deserialize_bool()
-    assert(bool.isLeft)
   }
   test("Deserializer.deserialize_u8") {
     val expected = 97
@@ -82,9 +79,6 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_u8() == Right(expectedTwo))
   }
   test("Deserializer.deserialize_str") {
-    /*var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN).putLong( 4)
-    val expected = new String("test".getBytes(), "utf-8")
-    expectedBytes = expectedBytes.put(expected.getBytes())*/
     var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
     expectedBytes = putString(expectedBytes, "test")
     val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
@@ -189,6 +183,36 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_enum(TesterEnumDeserializeConfig) == Right(TesterEnum.fail))
   }
 
+  /* Validate invalid input yields an error */
+  test("Deserializer.deserialize_bool_invalid") {
+    val d = makeDeserializer(1, (x:ByteBuffer) => x.put(9.toByte))
+    val bool = d.deserialize_bool()
+    assert(bool.isLeft)
+    assert(bool.left.get.isInstanceOf[InvalidVariantError])
+  }
+  test("Deserializer.deserialize_u64_invalid") {
+    val d = makeDeserializer(1, (x:ByteBuffer) => x.put(9.toByte))
+    val bool = d.deserialize_u64()
+    assert(bool.isLeft)
+    assert(bool.left.get.isInstanceOf[EOFError])
+  }
+  test("Deserializer.deserialize_str_invalid") {
+    var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
+    expectedBytes = expectedBytes.putLong(500)
+    expectedBytes = expectedBytes.put("test".getBytes("utf-8"))
+    val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
+    val st = d.deserialize_str()
+    assert(st.isLeft)
+    assert(st.left.get.isInstanceOf[EOFError])
+  }
+  test("Deserializer.deserialize_option_invalid") {
+    val d = makeDeserializer(1, (x:ByteBuffer) => x.put(10.toByte))
+    val opt = d.deserialize_option((x:Deserializer) => x.deserialize_u8())
+    assert(opt.isLeft)
+    assert(opt.left.get.isInstanceOf[InvalidVariantError])
+  }
+
+  /* Helper functions */
   def makeDeserializer(capacity: Int, insertVal: ByteBuffer=>ByteBuffer): Deserializer = {
     val byteRep = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN)
     new Deserializer(new ByteArrayInputStream(insertVal(byteRep).array()))

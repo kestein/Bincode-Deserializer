@@ -1,4 +1,4 @@
-import java.io.{File, FileInputStream, PipedInputStream, PipedOutputStream}
+import java.io._
 import java.nio.file.Files.createTempDirectory
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -50,7 +50,32 @@ class RustTest extends FunSuite {
     assert(validationOutput.length > 0)
     println(validationOutput)
   }
-  // Multiple values
+  test("validateMany") {
+    // Create the rust file
+    val tempDirectory = createTempDirectory("scalaTest").toString
+    val rustBasename: String = setupRustFiles(tempDirectory, "validateMany", 10)
+    // Deserialize from rust to scala
+    val d = new Deserializer(new FileInputStream(new StringBuilder(rustBasename).append(".bin").result()))
+    var deserializedValues: Seq[RandomStuff] = Seq()
+    var deserializedValue: Deserializer.DeserializeResult[RandomStuff] = null
+    while({
+      deserializedValue = d.deserialize_struct[RandomStuff](new RandomStuffFactory)
+      deserializedValue.isRight
+    }) {
+      deserializedValues = deserializedValues :+ deserializedValue.right.get
+    }
+    // Write out what scala deserialized
+    val scalaFilename = setupDeserializedFile(tempDirectory, "validateMany", deserializedValues)
+    // Validate
+    val in = new PipedInputStream()
+    val stdout = new PipedOutputStream(in)
+    Future {
+      val rustFilename = new StringBuilder(rustBasename).append(".json").result()
+      (s"src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe validate -b $rustFilename -a $scalaFilename" #> stdout).!
+    }
+    val validationOutput = new String(in.readAllBytes())
+    assert(validationOutput.length == 0)
+  }
 
   /*
     Creates the necessary files to deserialize data into scala and validate scala to rust
@@ -81,6 +106,19 @@ class RustTest extends FunSuite {
     val om = new ObjectMapper()
     om.registerModule(DefaultScalaModule)
     om.writeValue(new File(scalaFilename), deserializedValue)
+    scalaFilename
+  }
+
+  def setupDeserializedFile(dir: String, suffix: String, deserializedValues: Seq[RandomStuff]): String = {
+    val scalaFilename = new StringBuilder(dir).append("scala-").append(suffix).append(".json").result()
+    val om = new ObjectMapper()
+    val scalaFile = new BufferedWriter(new FileWriter(scalaFilename))
+    om.registerModule(DefaultScalaModule)
+    deserializedValues.foreach(r => {
+      scalaFile.write(om.writeValueAsString(r))
+      scalaFile.newLine()
+    })
+    scalaFile.close()
     scalaFilename
   }
 }
