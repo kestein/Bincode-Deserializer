@@ -182,6 +182,13 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_enum(TesterEnumDeserializeConfig) == Right(TesterEnum.pass))
     assert(d.deserialize_enum(TesterEnumDeserializeConfig) == Right(TesterEnum.fail))
   }
+  test("Deserializer.deserialize_big_endian") {
+    val expected = 1 << 8
+    var byteRep = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN)
+    byteRep = byteRep.putShort(1)
+    val d = new Deserializer(new ByteArrayInputStream(byteRep.array()), ByteOrder.BIG_ENDIAN)
+    assert(d.deserialize_i16().right.get == expected.toShort)
+  }
 
   /* Validate invalid input yields an error */
   test("Deserializer.deserialize_bool_invalid") {
