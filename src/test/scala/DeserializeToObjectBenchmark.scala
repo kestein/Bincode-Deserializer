@@ -2,17 +2,23 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import org.scalameter
 import org.scalameter._
-import org.scalameter.api.LoggingReporter
+import org.scalameter.api.{JSONSerializationPersistor, RegressionReporter}
 import org.scalameter.execution.SeparateJvmsExecutor
 import org.scalameter.picklers.Implicits._
+import org.scalameter.reporting.DsvReporter
 
 import scala.sys.process._
 
 object DeserializeToObjectBenchmark extends Bench[Double] {
   // Bencher config
   lazy val measurer = new scalameter.Measurer.Default
-  lazy val reporter = new LoggingReporter[Double]
-  lazy val persistor: Persistor = Persistor.None
+  lazy val reporter = Reporter.Composite(
+    new RegressionReporter(
+      RegressionReporter.Tester.OverlapIntervals(),
+      RegressionReporter.Historian.ExponentialBackoff() ),
+    DsvReporter(',')
+  )
+  lazy val persistor = new JSONSerializationPersistor()
   lazy val executor = SeparateJvmsExecutor(
     new Executor.Warmer.Default,
     Aggregator.average,
@@ -28,7 +34,7 @@ object DeserializeToObjectBenchmark extends Bench[Double] {
     new ByteArrayInputStream(byteOutput.toByteArray)
   }
   performance of "Deserializer" in {
-    measure method "deserialize" in {
+    measure method "deserialize_struct[RandomStuff]" in {
       using(readers) in {
         reader => {
           val d = new Deserializer(reader)

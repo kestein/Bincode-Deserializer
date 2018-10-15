@@ -1,11 +1,12 @@
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
-import org.scalameter
-import org.scalameter.api.LoggingReporter
-import org.scalameter._
-import org.scalameter.execution.{LocalExecutor, SeparateJvmsExecutor}
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.scalameter.api.RegressionReporter
+import org.scalameter.{Aggregator, Bench, Executor, Gen, Measurer, Reporter}
+import org.scalameter.execution.SeparateJvmsExecutor
+import org.scalameter.persistence.JSONSerializationPersistor
 import org.scalameter.picklers.Implicits._
+import org.scalameter.reporting.DsvReporter
 
 import scala.sys.process._
 
@@ -13,9 +14,14 @@ import scala.sys.process._
  * Does not measure the time it takes to convert the data from bincode to json.*/
 object ConvertAndDeserializeToJsonBenchmark extends Bench[Double] {
   // Bencher config
-  lazy val measurer = new scalameter.Measurer.Default
-  lazy val reporter = new LoggingReporter[Double]
-  lazy val persistor: Persistor = Persistor.None
+  lazy val measurer = new Measurer.Default
+  lazy val reporter = Reporter.Composite(
+    new RegressionReporter(
+      RegressionReporter.Tester.OverlapIntervals(),
+      RegressionReporter.Historian.ExponentialBackoff() ),
+    DsvReporter(',')
+  )
+  lazy val persistor = new JSONSerializationPersistor()
   lazy val executor = SeparateJvmsExecutor(
     new Executor.Warmer.Default,
     Aggregator.average,
@@ -31,8 +37,8 @@ object ConvertAndDeserializeToJsonBenchmark extends Bench[Double] {
     new ByteArrayInputStream(byteOutput.toByteArray)
   }
   final val mapper = new ObjectMapper
-  performance of "Deserializer" in {
-    measure method "readTree" in {
+  performance of "ConvertAndDeserializeToJson" in {
+    measure method "RustConvert.foreach.ObjectMapper.readTree" in {
       using(readers) in {
         reader => {
           ("src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe convert" #< reader).lineStream.iterator.foreach(s => mapper.readTree(s))
