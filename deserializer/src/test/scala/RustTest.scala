@@ -10,6 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.sys.process._
 
 class RustTest extends FunSuite {
+  val bincodeTesterPath: String = RustTest.bincodeTesterPath
   test("validateOne") {
     // Create the rust file
     val tempDirectory = createTempDirectory("scalaTest").toString
@@ -24,7 +25,7 @@ class RustTest extends FunSuite {
     val stdout = new PipedOutputStream(in)
     Future {
       val rustFilename = new StringBuilder(rustBasename).append(".json").result()
-      (s"src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe validate -b $rustFilename -a $scalaFilename" #> stdout).!
+      (s"$bincodeTesterPath validate -b $rustFilename -a $scalaFilename" #> stdout).!
     }
     val validationOutput = new String(in.readAllBytes())
     assert(validationOutput.length == 0)
@@ -44,7 +45,7 @@ class RustTest extends FunSuite {
     val in = new PipedInputStream()
     val stdout = new PipedOutputStream(in)
     Future {
-      (s"src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe validate -b $invalidRustFilename -a $scalaFilename" #> stdout).!
+      (s"$bincodeTesterPath validate -b $invalidRustFilename -a $scalaFilename" #> stdout).!
     }
     val validationOutput = new String(in.readAllBytes())
     assert(validationOutput.length > 0)
@@ -71,7 +72,7 @@ class RustTest extends FunSuite {
     val stdout = new PipedOutputStream(in)
     Future {
       val rustFilename = new StringBuilder(rustBasename).append(".json").result()
-      (s"src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe validate -b $rustFilename -a $scalaFilename" #> stdout).!
+      (s"$bincodeTesterPath validate -b $rustFilename -a $scalaFilename" #> stdout).!
     }
     val validationOutput = new String(in.readAllBytes())
     assert(validationOutput.length == 0)
@@ -90,11 +91,11 @@ class RustTest extends FunSuite {
     val rustBasename = new StringBuilder(dir).append("rust-").append(suffix).result()
     // Write the bincode file
     val binName = new StringBuilder(rustBasename).append(".bin").result()
-    s"src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe -s $seed -o $binName write -a $amount".!
+    s"$bincodeTesterPath -s $seed -o $binName write -a $amount".!
     // Write the json file to validate against
     val jsonName = new StringBuilder(rustBasename).append(".json").result()
-    (s"src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe -s $seed write -a $amount" #|
-      s"src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe -o $jsonName convert ").!
+    (s"$bincodeTesterPath -s $seed write -a $amount" #|
+      s"$bincodeTesterPath -o $jsonName convert ").!
     rustBasename
   }
 
@@ -121,4 +122,8 @@ class RustTest extends FunSuite {
     scalaFile.close()
     scalaFilename
   }
+}
+
+object RustTest {
+  val bincodeTesterPath: String = "deserializer\\src\\test\\rust\\bincode-tester\\target\\release\\bincode-tester.exe"
 }

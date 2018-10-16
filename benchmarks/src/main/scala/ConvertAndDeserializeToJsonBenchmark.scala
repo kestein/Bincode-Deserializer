@@ -2,11 +2,11 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.scalameter.api.RegressionReporter
-import org.scalameter.{Aggregator, Bench, Executor, Gen, Measurer, Reporter}
 import org.scalameter.execution.SeparateJvmsExecutor
 import org.scalameter.persistence.JSONSerializationPersistor
 import org.scalameter.picklers.Implicits._
 import org.scalameter.reporting.DsvReporter
+import org.scalameter._
 
 import scala.sys.process._
 
