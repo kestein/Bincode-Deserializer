@@ -1,8 +1,11 @@
-import Deserializer.DeserializeResult
+package com.kestein.deserializer.benchmarks
+
+import com.kestein.deserializer.Deserializer.DeserializeResult
+import com.kestein.deserializer.{Deserializer, FlatDeserializeConfig, MapDeserializeConfig}
 
 /*
-pub struct RandomStuff {
-  one: HashMap<usize, RandomSubStuff>,
+pub struct com.kestein.deserializer.benchmarks.RandomStuff {
+  one: HashMap<usize, com.kestein.deserializer.benchmarks.RandomSubStuff>,
   two: Vec<String>,
   three: i8,
   four: bool,

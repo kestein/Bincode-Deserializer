@@ -1,12 +1,15 @@
-import Deserializer.DeserializeResult
+package com.kestein.deserializer.benchmarks
+
+import com.kestein.deserializer.Deserializer.DeserializeResult
+import com.kestein.deserializer.{Deserializer, FlatDeserializeConfig}
 
 /*
-pub struct RandomSubStuff {
+pub struct com.kestein.deserializer.benchmarks.RandomSubStuff {
     one: usize,
     two: String,
     three: i64,
     four: Vec<Vec<u16>>,
-    five: MoreSubStuff
+    five: com.kestein.deserializer.benchmarks.MoreSubStuff
 }
  */
 
