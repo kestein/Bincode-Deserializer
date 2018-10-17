@@ -1,4 +1,5 @@
-import Deserializer.DeserializeResult
+import com.kestein.deserializer.Deserializer.DeserializeResult
+import com.kestein.deserializer.{Deserializer, FlatDeserializeConfig}
 
 /*
 pub struct RandomSubStuff {

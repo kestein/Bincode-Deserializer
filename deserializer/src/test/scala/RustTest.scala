@@ -3,6 +3,7 @@ import java.nio.file.Files.createTempDirectory
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.kestein.deserializer.{Deserializer, DeserializerException}
 import org.scalatest.FunSuite
 
 import scala.concurrent.Future
@@ -49,7 +50,6 @@ class RustTest extends FunSuite {
     }
     val validationOutput = new String(in.readAllBytes())
     assert(validationOutput.length > 0)
-    println(validationOutput)
   }
   test("validateMany") {
     // Create the rust file

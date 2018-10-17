@@ -1,3 +1,5 @@
+package com.kestein.deserializer
+
 class DeserializerError(val message: String)
 
 class DeserializerException(message: String, reason: Exception) extends Exception(message, reason) {

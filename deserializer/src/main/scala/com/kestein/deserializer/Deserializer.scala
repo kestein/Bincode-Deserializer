@@ -1,7 +1,9 @@
+package com.kestein.deserializer
+
 import java.io.InputStream
 import java.nio.{ByteBuffer, ByteOrder}
 
-import Deserializer.DeserializeResult
+import com.kestein.deserializer.Deserializer.DeserializeResult
 
 class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE_ENDIAN) {
     var bytesRead = 0
@@ -229,7 +231,7 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
 
     @param requested: The number of bytes that was requested
     @param got: The number of bytes that were actually received
-    @return: A DeserializerError encapsulating what IO error happened
+    @return: A com.kestein.deserializer.DeserializerError encapsulating what IO error happened
    */
   private def checkReadError(requested: Int, got: Int): DeserializerError = {
     if (source.available() == 0) {

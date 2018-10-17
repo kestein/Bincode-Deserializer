@@ -1,4 +1,6 @@
-import Deserializer.DeserializeResult
+package com.kestein.deserializer
+
+import com.kestein.deserializer.Deserializer.DeserializeResult
 
 trait MapDeserializeConfig[K, V] {
   def deserialize_key(d: Deserializer): DeserializeResult[K]

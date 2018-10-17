@@ -1,12 +1,13 @@
 import java.io.ByteArrayInputStream
 import java.nio.{ByteBuffer, ByteOrder}
 
-import Deserializer.DeserializeResult
+import com.kestein.deserializer.Deserializer.DeserializeResult
+import com.kestein.deserializer._
 import org.scalatest.FunSuite
 
 class DeserializerTest extends FunSuite {
   /* Validate valid input yields a valid result */
-  test("Deserializer.deserialize_bool") {
+  test("com.kestein.deserializer.Deserializer.deserialize_bool") {
     // False
     var d = makeDeserializer(1, (x:ByteBuffer) => x.put(0.toByte))
     var bool = d.deserialize_bool()
@@ -18,57 +19,57 @@ class DeserializerTest extends FunSuite {
     assert(bool.isRight)
     assert(bool.getOrElse(false))
   }
-  test("Deserializer.deserialize_u8") {
+  test("com.kestein.deserializer.Deserializer.deserialize_u8") {
     val expected = 97
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(expected.toByte))
     assert(d.deserialize_u8() == Right(expected.toShort))
   }
-  test("Deserializer.deserialize_i8") {
+  test("com.kestein.deserializer.Deserializer.deserialize_i8") {
     val expected = -97
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(expected.toByte))
     assert(d.deserialize_i8() == Right(expected.toByte))
   }
-  test("Deserializer.deserialize_u16") {
+  test("com.kestein.deserializer.Deserializer.deserialize_u16") {
     val expected = 300
     val d = makeDeserializer(2, (x:ByteBuffer) => x.putShort(expected.toShort))
     assert(d.deserialize_u16() == Right(expected.toInt))
   }
-  test("Deserializer.deserialize_i16") {
+  test("com.kestein.deserializer.Deserializer.deserialize_i16") {
     val expected = -300
     val d = makeDeserializer(2, (x:ByteBuffer) => x.putShort(expected.toShort))
     assert(d.deserialize_i16() == Right(expected.toShort))
   }
-  test("Deserializer.deserialize_u32") {
+  test("com.kestein.deserializer.Deserializer.deserialize_u32") {
     val expected = 300000
     val d = makeDeserializer(4, (x:ByteBuffer) => x.putInt(expected))
     assert(d.deserialize_u32() == Right(expected.toLong))
   }
-  test("Deserializer.deserialize_i32") {
+  test("com.kestein.deserializer.Deserializer.deserialize_i32") {
     val expected = -300000
     val d = makeDeserializer(4, (x:ByteBuffer) => x.putInt(expected))
     assert(d.deserialize_i32() == Right(expected))
   }
-  test("Deserializer.deserialize_u64") {
+  test("com.kestein.deserializer.Deserializer.deserialize_u64") {
     val expected: Long = Long.MaxValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putLong(expected))
     assert(d.deserialize_u64() == Right(expected))
   }
-  test("Deserializer.deserialize_i64") {
+  test("com.kestein.deserializer.Deserializer.deserialize_i64") {
     val expected = Long.MinValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putLong(expected))
     assert(d.deserialize_i64() == Right(expected))
   }
-  test("Deserializer.deserialize_f32") {
+  test("com.kestein.deserializer.Deserializer.deserialize_f32") {
     val expected = Float.MinValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putFloat(expected))
     assert(d.deserialize_f32() == Right(expected))
   }
-  test("Deserializer.deserialize_f64") {
+  test("com.kestein.deserializer.Deserializer.deserialize_f64") {
     val expected = Double.MinValue
     val d = makeDeserializer(8, (x:ByteBuffer) => x.putDouble(expected))
     assert(d.deserialize_f64() == Right(expected))
   }
-  test("Deserializer.deserialize_multiple_numbers") {
+  test("com.kestein.deserializer.Deserializer.deserialize_multiple_numbers") {
     val expectedOne = Double.MinValue
     val expectedTwo: Byte = 100
     val d = makeDeserializer(9, (x:ByteBuffer) => {
@@ -78,23 +79,23 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_f64() == Right(expectedOne))
     assert(d.deserialize_u8() == Right(expectedTwo))
   }
-  test("Deserializer.deserialize_str") {
+  test("com.kestein.deserializer.Deserializer.deserialize_str") {
     var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
     expectedBytes = putString(expectedBytes, "test")
     val d = new Deserializer(new ByteArrayInputStream(expectedBytes.array()))
     assert(d.deserialize_str() == Right("test"))
   }
-  test("Deserializer.deserialize_none") {
+  test("com.kestein.deserializer.Deserializer.deserialize_none") {
     val expected = None
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(0.toByte))
     assert(d.deserialize_option((x:Deserializer) => x.deserialize_u8()) == Right(expected))
   }
-  test("Deserializer.deserialize_some_int") {
+  test("com.kestein.deserializer.Deserializer.deserialize_some_int") {
     val expected: Some[Int] = Some(7)
     val d = makeDeserializer(5, (x:ByteBuffer) => x.put(1.toByte).putInt(7))
     assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == Right(expected))
   }
-  test("Deserializer.deserialize_some_int_some_short") {
+  test("com.kestein.deserializer.Deserializer.deserialize_some_int_some_short") {
     val expectedOne: Some[Int] = Some(7)
     val expectedTwo: Some[Short] = Some(-1)
     // Make the deserializer
@@ -106,7 +107,7 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_option((x:Deserializer) => x.deserialize_u32()) == Right(expectedOne))
     assert(d.deserialize_option((x:Deserializer) => x.deserialize_i16()) == Right(expectedTwo))
   }
-  test("Deserializer.deserialize_seq") {
+  test("com.kestein.deserializer.Deserializer.deserialize_seq") {
     val expected: Array[Int] = Array(1,2,3,4,5)
     // Make the deserializer
     var byteRep = ByteBuffer.allocate((5*4)+8).order(ByteOrder.LITTLE_ENDIAN)
@@ -120,7 +121,7 @@ class DeserializerTest extends FunSuite {
       assert(s.toArray sameElements expected)
     })
   }
-  test("Deserializer.deserialize_tuple") {
+  test("com.kestein.deserializer.Deserializer.deserialize_tuple") {
     val expected = (9, "one", 8.toLong)
     var byteRep = ByteBuffer.allocate((5*4)+8).order(ByteOrder.LITTLE_ENDIAN)
     byteRep = byteRep.put(9.toByte)
@@ -141,7 +142,7 @@ class DeserializerTest extends FunSuite {
     }
     assert(d.deserialize_tuple[(Byte, String, Long)](ByteStringLongConfig) == Right(expected))
   }
-  test("Deserializer.deserialize_map") {
+  test("com.kestein.deserializer.Deserializer.deserialize_map") {
     val expected: Map[Int, Int] = Map(1->2,3->4,5->6)
     var byteRep = ByteBuffer.allocate(8+6*4).order(ByteOrder.LITTLE_ENDIAN)
     byteRep = byteRep.putLong(3)
@@ -159,7 +160,7 @@ class DeserializerTest extends FunSuite {
     val d = new Deserializer(new ByteArrayInputStream(byteRep.array()))
     assert(d.deserialize_map(MapIntIntConfig) == Right(expected))
   }
-  test("Deserializer.deserialize_enum") {
+  test("com.kestein.deserializer.Deserializer.deserialize_enum") {
     object TesterEnum extends Enumeration {
       type TesterEnum = Int
       val pass = 100
@@ -182,7 +183,7 @@ class DeserializerTest extends FunSuite {
     assert(d.deserialize_enum(TesterEnumDeserializeConfig) == Right(TesterEnum.pass))
     assert(d.deserialize_enum(TesterEnumDeserializeConfig) == Right(TesterEnum.fail))
   }
-  test("Deserializer.deserialize_big_endian") {
+  test("com.kestein.deserializer.Deserializer.deserialize_big_endian") {
     val expected = 1 << 8
     var byteRep = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN)
     byteRep = byteRep.putShort(1)
@@ -191,19 +192,19 @@ class DeserializerTest extends FunSuite {
   }
 
   /* Validate invalid input yields an error */
-  test("Deserializer.deserialize_bool_invalid") {
+  test("com.kestein.deserializer.Deserializer.deserialize_bool_invalid") {
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(9.toByte))
     val bool = d.deserialize_bool()
     assert(bool.isLeft)
     assert(bool.left.get.isInstanceOf[InvalidVariantError])
   }
-  test("Deserializer.deserialize_u64_invalid") {
+  test("com.kestein.deserializer.Deserializer.deserialize_u64_invalid") {
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(9.toByte))
     val bool = d.deserialize_u64()
     assert(bool.isLeft)
     assert(bool.left.get.isInstanceOf[EOFError])
   }
-  test("Deserializer.deserialize_str_invalid") {
+  test("com.kestein.deserializer.Deserializer.deserialize_str_invalid") {
     var expectedBytes = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
     expectedBytes = expectedBytes.putLong(500)
     expectedBytes = expectedBytes.put("test".getBytes("utf-8"))
@@ -212,7 +213,7 @@ class DeserializerTest extends FunSuite {
     assert(st.isLeft)
     assert(st.left.get.isInstanceOf[EOFError])
   }
-  test("Deserializer.deserialize_option_invalid") {
+  test("com.kestein.deserializer.Deserializer.deserialize_option_invalid") {
     val d = makeDeserializer(1, (x:ByteBuffer) => x.put(10.toByte))
     val opt = d.deserialize_option((x:Deserializer) => x.deserialize_u8())
     assert(opt.isLeft)
