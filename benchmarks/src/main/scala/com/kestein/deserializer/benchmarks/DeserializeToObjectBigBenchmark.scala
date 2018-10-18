@@ -7,6 +7,14 @@ import org.openjdk.jmh.infra.Blackhole
 
 import com.kestein.deserializer.{Deserializer, DeserializerException, DeserializerIterator}
 
+/* Benchmark of deserializing bincode data straight to a RandomStuff Object
+*
+*  In order to fit all of the records into memory, files for 5000 and 10000 records weere made prior to running the test.
+*  The files should live in `test-files/data/` in the root of the project. Use
+*                 `bincode-tester.exe -o <number>-records.bin write -a <number>`
+*  to create the file.
+* */
+
 object DeserializeToObjectBigBenchmark {
   @State(Scope.Thread)
   class DataState {
@@ -40,7 +48,7 @@ class DeserializeToObjectBigBenchmark {
   @Measurement(iterations=12)
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Warmup(iterations=10)
-  def deserializeToObject(state: DataState, bh: Blackhole): Unit = {
+  def deserializeToObjectBig(state: DataState, bh: Blackhole): Unit = {
     state.iterationBincode.foreach(rs => bh.consume(rs))
   }
 }

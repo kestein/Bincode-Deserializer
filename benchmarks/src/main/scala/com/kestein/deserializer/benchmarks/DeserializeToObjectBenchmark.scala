@@ -9,6 +9,8 @@ import org.openjdk.jmh.infra.Blackhole
 
 import scala.sys.process._
 
+/* Benchmark of deserializing bincode data straight to a RandomStuff Object */
+
 object DeserializeToObjectBenchmark {
   @State(Scope.Thread)
   class DataState {

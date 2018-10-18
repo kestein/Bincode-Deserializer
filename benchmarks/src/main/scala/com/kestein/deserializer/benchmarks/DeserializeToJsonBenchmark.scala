@@ -10,8 +10,7 @@ import org.openjdk.jmh.infra.Blackhole
 
 import scala.sys.process._
 
-/* Benchmark of taking the data as a string and loading it as a JsonNode.
- * Does not measure the time it takes to convert the data from bincode to json.*/
+/* Benchmark of taking the data as a string and loading it as a JsonNode. */
 
 object DeserializeToJsonBenchmark {
   @State(Scope.Thread)

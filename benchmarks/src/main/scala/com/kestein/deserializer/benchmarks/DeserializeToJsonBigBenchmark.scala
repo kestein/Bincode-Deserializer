@@ -9,6 +9,15 @@ import org.openjdk.jmh.annotations.Mode.All
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
+
+/* Benchmark of taking the data as a string and loading it as a JsonNode.
+*
+*  In order to fit all of the records into memory, files for 5000 and 10000 records weere made prior to running the test.
+*  The files should live in `test-files/data/` in the root of the project. Use
+*                 `bincode-tester.exe write -a <number> | bincodee-tester.exe convert > <number>-records.json`
+*  to create the file.
+* */
+
 object DeserializeToJsonBigBenchmark {
   @State(Scope.Thread)
   class DataState {
