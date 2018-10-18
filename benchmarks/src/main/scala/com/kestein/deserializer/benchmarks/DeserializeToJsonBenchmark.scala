@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.openjdk.jmh.annotations.Mode.AverageTime
+import org.openjdk.jmh.annotations.Mode._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
@@ -12,24 +12,44 @@ import scala.sys.process._
 
 /* Benchmark of taking the data as a string and loading it as a JsonNode.
  * Does not measure the time it takes to convert the data from bincode to json.*/
-@State(Scope.Thread)
-class DeserializeToJsonBenchmark {
-  @Param(Array("1", "10", "100"))
-  var iterations: Int = 1
-  var jsonIterator: Iterator[String] = _
-  final val om = new ObjectMapper
-  om.registerModule(DefaultScalaModule)
 
-  @Setup(Level.Invocation)
-  def generateJson(): Unit = {
-    jsonIterator = (s"bincode-tester.exe write -a $iterations" #|
-      s"bincode-tester.exe convert ").lineStream.iterator
+object DeserializeToJsonBenchmark {
+  @State(Scope.Thread)
+  class DataState {
+    @Param(Array("1", "10", "100"))
+    var iterations: Int = 1
+    var generatedJsonData: Array[String] = _
+    var generatedJsonIterator: Array[String] = _
+    final val om = new ObjectMapper
+    om.registerModule(DefaultScalaModule)
+
+    /* Make JSON data once */
+    @Setup(Level.Trial)
+    def generateJson(): Unit = {
+      generatedJsonData = (s"bincode-tester.exe write -a $iterations" #| s"bincode-tester.exe convert ").lineStream.toArray
+    }
+
+    /* Make copies of the already generated JSON */
+    @Setup(Level.Iteration)
+    def generateJsonIterator(): Unit = {
+      generatedJsonIterator = new Array(generatedJsonData.length)
+      generatedJsonData.copyToArray(generatedJsonIterator)
+    }
   }
+}
+
+@State(Scope.Thread)
+@Threads(Threads.MAX)
+class DeserializeToJsonBenchmark extends App {
+  import DeserializeToJsonBenchmark._
 
   @Benchmark
-  @BenchmarkMode(Array(AverageTime))
+  @BenchmarkMode(Array(All))
+  @Fork(1)
+  @Measurement(iterations=12)
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def deserializeToJson(bh: Blackhole): Unit = {
-    jsonIterator.foreach(line => bh.consume(om.readTree(line)))
+  @Warmup(iterations=10)
+  def deserializeToJson(state: DataState, bh: Blackhole): Unit = {
+    state.generatedJsonIterator.foreach(line => bh.consume(state.om.readTree(line)))
   }
 }
