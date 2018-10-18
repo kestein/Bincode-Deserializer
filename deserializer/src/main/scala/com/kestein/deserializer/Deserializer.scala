@@ -6,7 +6,7 @@ import java.nio.{ByteBuffer, ByteOrder}
 import com.kestein.deserializer.Deserializer.DeserializeResult
 
 class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE_ENDIAN) {
-    var bytesRead = 0
+  var bytesRead = 0
   val MaxIntAsBigInt = BigInt.apply(Int.MaxValue)
 
   /* ========================================== Deserialization Functions ========================================== */
@@ -195,9 +195,9 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
      bytes.
    */
   private def readLargeBytes(buf: Array[Byte], length: BigInt): Option[DeserializerError] = {
-    assert(buf.length>=length)
-    val reads: Int = (length/MaxIntAsBigInt).toInt
-    val leftover: Int = (length%MaxIntAsBigInt).toInt
+    assert(buf.length >= length)
+    val reads: Int = (length / MaxIntAsBigInt).toInt
+    val leftover: Int = (length % MaxIntAsBigInt).toInt
     var actual = 0
     if (reads == 0) {
       // The requested read can fit from one read
@@ -210,14 +210,14 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     } else {
       // A series of reads is used to fill the buffer
       for (i <- 0 to reads) {
-        actual = source.readNBytes(buf, i*Int.MaxValue, Int.MaxValue)
+        actual = source.readNBytes(buf, i * Int.MaxValue, Int.MaxValue)
         if (actual != Int.MaxValue) {
           Some(checkReadError(Int.MaxValue, actual))
         }
         bytesRead += Int.MaxValue
       }
       // Read in any leftover bytes
-      actual = source.readNBytes(buf, reads*Int.MaxValue, leftover)
+      actual = source.readNBytes(buf, reads * Int.MaxValue, leftover)
       if (actual != leftover) {
         Some(checkReadError(leftover, actual))
       }
@@ -240,6 +240,26 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     } else {
       new DeserializeIOError(requested, got)
     }
+  }
+
+  /*
+    Wrapper around Inputstream.available()
+
+    @returns: (Straight from the javadocs) Returns an estimate of the number of bytes that can be read (or skipped over)
+      from this input stream without blocking by the next invocation of a method for this input stream.
+   */
+  def available(): Int = {
+    source.available()
+  }
+
+  /*
+    Turns this deserializer into an iterator over the deserialized values
+
+    @param deserializeDef: The function to call to deserialize the data
+    @return: A new DeserializerIterator over the specified type
+   */
+  def iterator[U](deserializeDef: Deserializer=>U): DeserializerIterator[U] = {
+    new DeserializerIterator[U](this, deserializeDef)
   }
 }
 
