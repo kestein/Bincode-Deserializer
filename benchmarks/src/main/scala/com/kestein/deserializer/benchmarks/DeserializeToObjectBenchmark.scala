@@ -12,7 +12,7 @@ import scala.sys.process._
 object DeserializeToObjectBenchmark {
   @State(Scope.Thread)
   class DataState {
-    @Param(Array("1", "10", "100"))
+    @Param(Array("1", "10", "100", "1000", "2500"))
     var iterations: Int = 1
     var generatedBincode: Array[Byte] = _
     var iterationBincode: DeserializerIterator[RandomStuff] = _
@@ -20,8 +20,9 @@ object DeserializeToObjectBenchmark {
     /* Make Bincode data once */
     @Setup(Level.Trial)
     def generateBincode(): Unit = {
+      val exePath = "test-files/bin/bincode-tester.exe"
       val stdout = new ByteArrayOutputStream()
-      (s"bincode-tester.exe write -a $iterations" #> stdout).!
+      (s"$exePath write -a $iterations" #> stdout).!
       generatedBincode = stdout.toByteArray
     }
 

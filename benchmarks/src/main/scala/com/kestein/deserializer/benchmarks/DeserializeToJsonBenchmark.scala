@@ -16,7 +16,7 @@ import scala.sys.process._
 object DeserializeToJsonBenchmark {
   @State(Scope.Thread)
   class DataState {
-    @Param(Array("1", "10", "100"))
+    @Param(Array("1", "10", "100", "1000", "2500"))
     var iterations: Int = 1
     var generatedJsonData: Array[String] = _
     var generatedJsonIterator: Array[String] = _
@@ -26,7 +26,8 @@ object DeserializeToJsonBenchmark {
     /* Make JSON data once */
     @Setup(Level.Trial)
     def generateJson(): Unit = {
-      generatedJsonData = (s"bincode-tester.exe write -a $iterations" #| s"bincode-tester.exe convert ").lineStream.toArray
+      val exePath = "test-files/bin/bincode-tester.exe"
+      generatedJsonData = (s"$exePath write -a $iterations" #| s"$exePath convert ").lineStream.toArray
     }
 
     /* Make copies of the already generated JSON */
