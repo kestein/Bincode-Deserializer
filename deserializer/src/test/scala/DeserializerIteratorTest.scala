@@ -12,11 +12,25 @@ class DeserializerIteratorTest extends FunSuite {
     (s"${RustTest.bincodeTesterPath} write -a $amount" #> stdout).!
     val d = new Deserializer(new ByteArrayInputStream(stdout.toByteArray))
     assert(d.available() > 0)
-    val dIter = new DeserializerIterator[RandomStuff](d, (d: Deserializer) =>{
+    val dIter = new DeserializerIterator[RandomStuff](d, (d: Deserializer) => {
       d.deserialize_struct(new RandomStuffFactory)
-       .fold(err => throw new DeserializerException(err), rs => rs)
+        .fold(err => {
+          err.message match {
+            case "EOF was reached in the stream" => null
+            case _ => throw new DeserializerException(err)
+          }
+        }, rs => rs)
     })
-    assert(dIter.nonEmpty)
-    assert(dIter.toArray.length == amount)
+    val iterItems = dIter.iterator
+    val first = iterItems.next()
+    for (_ <- 0 to 17) {
+      val _ = iterItems.next()
+    }
+    val last = iterItems.next()
+    assert(last != null)
+    // Items are not all the same
+    assert(first != last)
+    // Only $amount items
+    assert(iterItems.isEmpty)
   }
 }
