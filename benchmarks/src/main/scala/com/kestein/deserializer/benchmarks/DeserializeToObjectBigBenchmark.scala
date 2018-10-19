@@ -1,10 +1,10 @@
 package com.kestein.deserializer.benchmarks
 
-import java.io.{File, FileInputStream}
+import java.io.{BufferedInputStream, File, FileInputStream}
 import java.util.concurrent.TimeUnit
+
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-
 import com.kestein.deserializer.{Deserializer, DeserializerException, DeserializerIterator}
 
 /* Benchmark of deserializing bincode data straight to a RandomStuff Object
@@ -26,7 +26,7 @@ object DeserializeToObjectBigBenchmark {
     @Setup(Level.Iteration)
     def generateBincode(): Unit = {
       val filename = "test-files/data/" + iterations + "-records.bin"
-      val binFile = new FileInputStream(new File(filename))
+      val binFile = new BufferedInputStream(new FileInputStream(new File(filename)))
       iterationBincode = new DeserializerIterator[RandomStuff](
         new Deserializer(binFile),
         (d: Deserializer) => {
