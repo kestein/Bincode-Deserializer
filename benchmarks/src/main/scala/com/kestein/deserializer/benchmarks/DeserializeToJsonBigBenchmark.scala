@@ -47,6 +47,6 @@ class DeserializeToJsonBigBenchmark {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Warmup(iterations=10)
   def deserializeToJsonBig(state: DataState, bh: Blackhole): Unit = {
-    state.jsonData.lines().forEach(line => bh.consume(state.om.readTree(line)))
+    state.jsonData.lines().forEachOrdered(line => bh.consume(state.om.readTree(line)))
   }
 }
