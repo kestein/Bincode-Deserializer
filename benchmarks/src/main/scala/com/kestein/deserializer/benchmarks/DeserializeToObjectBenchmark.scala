@@ -1,6 +1,5 @@
 package com.kestein.deserializer.benchmarks
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util.concurrent.TimeUnit
 
 import com.kestein.deserializer.{Deserializer, DeserializerException, DeserializerIterator}
@@ -14,31 +13,31 @@ import scala.sys.process._
 object DeserializeToObjectBenchmark {
   @State(Scope.Thread)
   class DataState {
-    @Param(Array("1", "10", "100", "1000", "2500"))
+    @Param(Array("1", "10", "100", "1000", "10000"))
     var iterations: Int = 1
-    var generatedBincode: Array[Byte] = _
     var iterationBincode: DeserializerIterator[RandomStuff] = _
 
-    /* Make Bincode data once */
-    @Setup(Level.Trial)
+    @Setup(Level.Iteration)
     def generateBincode(): Unit = {
       val exePath = "test-files/bin/bincode-tester.exe"
-      val stdout = new ByteArrayOutputStream()
-      (s"$exePath write -a $iterations" #> stdout).!
-      generatedBincode = stdout.toByteArray
-    }
-
-    /* Make copies of the already generated Bincode */
-    @Setup(Level.Iteration)
-    def generateIterationBincode(): Unit = {
-      val iterationBincodeBytes: Array[Byte] = new Array(generatedBincode.length)
-      generatedBincode.copyToArray(iterationBincodeBytes)
-      iterationBincode = new DeserializerIterator[RandomStuff](new Deserializer(new ByteArrayInputStream(iterationBincodeBytes)),
-                                                               (d: Deserializer) => {
-                                                                 d.deserialize_struct(new RandomStuffFactory)
-                                                                  .fold(err => throw new DeserializerException(err),
-                                                                        rs => rs)
-                                                               })
+      s"$exePath write -a $iterations".run(new ProcessIO(
+        _ => {
+          // Unused
+        },
+        stdout => {
+          iterationBincode = new DeserializerIterator[RandomStuff](
+            new Deserializer(stdout),
+            (d: Deserializer) => {
+              d.deserialize_struct(new RandomStuffFactory)
+                .fold(err => throw new DeserializerException(err),
+                  rs => rs)
+            })
+        },
+        _ => {
+          // Unused
+        }
+      ))
+      Thread.sleep(200)
     }
   }
 }
