@@ -15,7 +15,7 @@ import scala.sys.process._
 object DeserializeToJsonBenchmark {
   @State(Scope.Thread)
   class DataState {
-    @Param(Array("1", "10", "100", "1000", "10000"))
+    @Param(Array("1", "100", "10000", "1000000"))
     var iterations: Int = 1
     var jsonData: BufferedReader = _
     final val om = new ObjectMapper
@@ -34,9 +34,10 @@ object DeserializeToJsonBenchmark {
         },
         _ => {
           // Unused
-        }
+        },
+        true
       ))
-      Thread.sleep(200)
+      Thread.sleep(500)
     }
   }
 }
@@ -50,7 +51,7 @@ class DeserializeToJsonBenchmark {
   @BenchmarkMode(Array(Mode.All))
   @Fork(1)
   @Measurement(iterations=12)
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Warmup(iterations=10)
   def deserializeToJson(state: DataState, bh: Blackhole): Unit = {
     state.jsonData.lines().forEachOrdered(line => bh.consume(state.om.readTree(line)))
