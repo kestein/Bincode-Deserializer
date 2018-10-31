@@ -1,5 +1,6 @@
 package com.kestein.deserializer.benchmarks
 
+import java.io.BufferedInputStream
 import java.util.concurrent.TimeUnit
 
 import com.kestein.deserializer.{Deserializer, DeserializerException, DeserializerIterator}
@@ -13,7 +14,7 @@ import scala.sys.process._
 object DeserializeToObjectBenchmark {
   @State(Scope.Thread)
   class DataState {
-    @Param(Array("1", "10", "100", "1000", "10000"))
+    @Param(Array("1", "100", "10000", "1000000"))
     var iterations: Int = 1
     var iterationBincode: DeserializerIterator[RandomStuff] = _
 
@@ -26,7 +27,7 @@ object DeserializeToObjectBenchmark {
         },
         stdout => {
           iterationBincode = new DeserializerIterator[RandomStuff](
-            new Deserializer(stdout),
+            new Deserializer(new BufferedInputStream(stdout)),
             (d: Deserializer) => {
               d.deserialize_struct(new RandomStuffFactory)
                 .fold(err => throw new DeserializerException(err),
@@ -35,9 +36,10 @@ object DeserializeToObjectBenchmark {
         },
         _ => {
           // Unused
-        }
+        },
+        true
       ))
-      Thread.sleep(200)
+      Thread.sleep(500)
     }
   }
 }
@@ -51,7 +53,7 @@ class DeserializeToObjectBenchmark {
   @BenchmarkMode(Array(Mode.All))
   @Fork(1)
   @Measurement(iterations=12)
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
   @Warmup(iterations=10)
   def deserializeToObject(state: DataState, bh: Blackhole): Unit = {
     state.iterationBincode.foreach(rs => bh.consume(rs))
