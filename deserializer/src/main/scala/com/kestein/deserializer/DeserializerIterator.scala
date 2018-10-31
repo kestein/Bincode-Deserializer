@@ -6,7 +6,10 @@ package com.kestein.deserializer
 class DeserializerIterator[U](deserializer: Deserializer, deserializeDef: Deserializer=>U) extends Iterable[U] {
   override def iterator: Iterator[U] = new Iterator[U] {
     override def hasNext: Boolean = {
-      deserializer.available() > 0
+      deserializer.mark()
+      val more = deserializer.read() != -1
+      deserializer.reset()
+      more
     }
 
     override def next(): U = {

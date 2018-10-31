@@ -242,14 +242,27 @@ class Deserializer(source: InputStream, endianness: ByteOrder = ByteOrder.LITTLE
     }
   }
 
-  /*
-    Wrapper around Inputstream.available()
+  /* Wrappers used for the sake of determining EOF when iterating. */
 
-    @returns: (Straight from the javadocs) Returns an estimate of the number of bytes that can be read (or skipped over)
-      from this input stream without blocking by the next invocation of a method for this input stream.
+  /*
+    Wrapper around Inputstream.mark().
    */
-  def available(): Int = {
-    source.available()
+  def mark(): Unit = {
+    source.mark(2)
+  }
+
+  /*
+    Wrapper around Inputstream.read().
+   */
+  def read(): Int = {
+    source.read()
+  }
+
+  /*
+    Wrapper around Inputstream.read().
+   */
+  def reset(): Unit = {
+    source.reset()
   }
 
   /*
