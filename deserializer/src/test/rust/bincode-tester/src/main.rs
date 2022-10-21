@@ -67,7 +67,7 @@ fn main() {
                         .about("Compares 2 json files to ensure they have the same output.
                                 Use one file from scala and one from rust.")
                     .get_matches();
-    let sink: Box<Write> = match app_cli.value_of("OUTPUT").unwrap_or("-") {
+    let sink: Box<dyn Write> = match app_cli.value_of("OUTPUT").unwrap_or("-") {
         "-" | "stdout" => Box::new(stdout()),
         s @ _ => Box::new(BufWriter::new(File::create(s).expect("Unable to create file")))
     };
@@ -81,7 +81,7 @@ fn main() {
             write(&mut harness, amount);
         },
         ("convert", Some(sub_args)) => {
-            let source: Box<Read> = match sub_args.value_of("INPUT").unwrap() {
+            let source: Box<dyn Read> = match sub_args.value_of("INPUT").unwrap() {
                 "-" | "stdin" => Box::new(stdin()),
                 s @ _ => Box::new(BufReader::new(File::open(s).expect("Unable to create file")))
             };
